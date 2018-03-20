@@ -1,0 +1,16 @@
+* { font-size: 10pt; font-family: sans-serif;}
+body { margin: 20px; }
+table { margin: 0px auto; border: 1px solid #CCC;}
+td, th { text-align: left; padding: 3px 10px; margin: 0px; border-collapse: collapse; white-space: nowrap;}
+tr:nth-child(even) {background: #EEE}
+tr:nth-child(odd) {background: #FFF}
+th { font-weight: bold; background-color: #BBB  }
+#table { margin-bottom: 30px; }
+#table table { width: 100%; }
+#bottom { margin: 0px auto; overflow:auto; }
+#info { float: left; width: 50%;}
+#metrics { float: left; width: 50%;}
+#metrics table { margin-right: 10px; float: left; }
+.false, .undefined { color: red; font-weight: bold }
+.wrong, .eliminated, .eliminated tr td {  background-color: #FFAAAA !important; }
+.right {  background-color: #AAFFAA !important; }

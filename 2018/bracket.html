@@ -1,0 +1,152 @@
+<html>
+
+<head>
+
+	<link rel="stylesheet" href="style.css" />
+	<script
+	  src="https://code.jquery.com/jquery-3.3.1.min.js"
+	  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+	  crossorigin="anonymous"></script>
+
+	<script type="text/javascript" src="paid.js"></script>
+	<script type="text/javascript" src="lookup.js"></script>
+	<script type="text/javascript" src="teamLookup.js"></script>
+</head>
+
+<body>
+	<div id="table"></div>
+	<div id="bottom">
+		<div id="metrics"></div>
+		<div id="info"></div>
+	</div>
+	<script>
+	var brackets = "";
+
+	$.ajax({ 
+	    url: 'http://g.espncdn.com/tournament-challenge-bracket/2018/en/api/group?groupID=99381&sort=-1&start=0&length=300', 
+	    dataType: 'json', 
+	    async: false, 
+	    success: function(data){ 
+
+			var rounds = [2,3,4,5,6,7];
+			var roundLookup = {2:"R32",3:"Sweet 16",4:"Elite 8",5:"Final Four",6:"Championship",7:"Champion"};
+			var entries = data.g.e;
+			var metrics = {2:{},3:{},4:{},5:{},6:{},7:{}};
+
+		   // console.log(entries);
+		   // console.log(teamLookup);
+			var entriesLength = entries.length;
+			$.each(entries, function(key){
+				thisEntry = entries[key];
+				// if(thisEntry.n_d == 'LowBallj') {
+
+					brackets += "<tr><td>" + thisEntry.r + "</td><td>" + thisEntry.n_e + "<br>" + thisEntry.n_d + "<br>";
+					person = lookup[thisEntry.n_d];
+					brackets += person + "</td>";
+					thisPaid = paid.includes(person);
+					if(thisEntry.n_d == 'CFrau1693') {
+						thisPaid = 'Yoon 3/20';
+					}
+					brackets += "<td class='" + thisPaid + "'>" + thisPaid + "</td>";
+
+					brackets += "<td>" + thisEntry.p + "</td>";
+					brackets += "<td>" + thisEntry.ppr + "</td>";
+
+					picks = thisEntry.ps;
+					var picksArray = picks.split("|");
+
+					picksMap = {
+							2: picksArray.slice(0, 32),
+							3: picksArray.slice(32, 48),
+							4: picksArray.slice(48, 56),
+							5: picksArray.slice(56, 60),
+							6: picksArray.slice(60, 62),
+							7: picksArray.slice(62, 63)
+					}
+
+					rounds.forEach(function(r) {
+			  			thisRoundPicks = picksMap[r];
+						thisRoundOfficial = officialMap[r];
+						thisRoundCorrect = thisRoundPicks.length;
+						
+						thisRoundHTML = '<td>'
+						for(j = 0; j < thisRoundPicks.length; j++) {
+			  				css = '';
+			  				trp = thisRoundPicks[j];
+			  				tro = thisRoundOfficial[j]; 
+			  				if(trp == tro) {
+								css = ' class="right"';
+							} else {
+								if(tro != '00' || teamLookup[trp]["isEliminated"]) {
+									css = ' class="wrong"';
+									thisRoundCorrect--;
+								}
+							}
+							thisRoundHTML += '<img' + css + ' src="' + teamLookup[trp]["image"] + '">';
+							if(j % 8 == 7) { thisRoundHTML += '<br />'; }
+
+					        if (typeof metrics[r][trp] == 'undefined') {
+					            metrics[r][trp] = 1;
+					        } else {
+			        		    metrics[r][trp] += 1;
+			         		}
+
+
+			  			}
+				  		thisRoundHTML += '</td>';
+				  		thisRoundHTML += '<td>' + thisRoundCorrect + '</td>';
+			  			
+
+			  			if(r > 2) { brackets += thisRoundHTML; }
+			
+
+			      	});
+					brackets += "</tr>";
+				// } // lowballj only
+		   });
+		   var tableContent = "";
+		   tableContent += "<table cellspacing=0 cellpadding=0>";
+		   tableContent += "<tr><th>R</th><th>Who</th><th>Paid?</th><th>PTS</th><th>PPR</th><th colspan=2>S16</th><th colspan=2>E8</th><th colspan=2>FF</th><th colspan=2>Championship</th><th colspan=2>Champion</th></tr>";
+		   tableContent += brackets;
+		   tableContent += "</table>";
+			$("#table").html(tableContent);
+			
+			var infoContent = "<table cellspacing=0 cellpadding=0><tr><th colspan=2>Info</th></tr>";
+			infoContent += "<tr><td>Entries</td><td>" + entriesLength + "</td></tr>";
+			total = entriesLength * 20;
+			first = total * .65;
+			second = total * .25;
+			third = total * .10;
+			infoContent += "<tr><td>Total Pot</td><td>$" + total + "</td></tr>";
+			infoContent += "<tr><td>1st Place</td><td>$" + first + "</td></tr>";
+			infoContent += "<tr><td>2nd Place</td><td>$" + second + "</td></tr>";
+			infoContent += "<tr><td>3rd Place</td><td>$" + third + "</td></tr>";
+			infoContent += "</table>";
+			$("#info").html(infoContent);
+
+			var metricsContent = '';
+			rounds.forEach(function(round) {
+				metricsContent += "<table cellspacing=0 cellpadding=0><tr><th colspan=3>" + roundLookup[round] + "</th></tr>"
+		      	var sortedChampions = Object.keys(metrics[round]) //Create a list from the keys of your map. 
+			    .sort( 
+			        function(a,b) { 
+			            return metrics[round][b] - metrics[round][a];
+			        })
+				sortedChampions.forEach(function(sc) {
+					css = '';
+					if(teamLookup[sc]["furthestRound"] < round && teamLookup[sc]["isEliminated"]) {
+						css = ' class="eliminated"';
+					}
+					metricsContent += '<tr' + css + '><td><img src="' + teamLookup[sc]["image"] +'"></td><td>' + metrics[round][sc] + "</td><td>" + ((metrics[round][sc]/entriesLength) * 100).toFixed(0) + "%</td></tr>"
+				});
+			metricsContent += "</table>"
+				
+			});
+			
+			$("#metrics").html(metricsContent);
+		}
+
+	});
+	</script>
+</body>
+</html>
