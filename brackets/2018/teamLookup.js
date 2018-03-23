@@ -11,6 +11,7 @@ $.ajax({
 
         var furthestRound = 1;
     	var games = gamesData.games;
+        console.log(games.length);
     	for (i = 0; i <= 62; i++) { 
     		game = games[i];
         	teams = game.teams;
